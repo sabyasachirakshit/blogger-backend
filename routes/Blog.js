@@ -6,24 +6,29 @@ const User = require('../models/User');
 // Fetch all blogs
 router.get('/', async (req, res) => {
   try {
-    const blogs = await Blog.find();
-    res.status(200).json(blogs);
+    const blogs = await Blog.find().populate('author', 'username');
+    res.json(blogs);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch blogs. Please try again.' });
+    res.status(500).json({ message: 'Error fetching blogs' });
   }
 });
 
-// Create a new blog
+// Create a new blog post
 router.post('/create-blog', async (req, res) => {
   const { title, content, author } = req.body;
 
   try {
     const user = await User.findOne({ username: author });
     if (!user) {
-      return res.status(404).json({ message: 'User not found.' });
+      return res.status(400).json({ message: 'Author not found' });
     }
 
-    const newBlog = new Blog({ title, content, author });
+    const newBlog = new Blog({
+      title,
+      content,
+      author: user._id,
+    });
+
     await newBlog.save();
     res.status(201).json({ message: 'Blog post created successfully!' });
   } catch (error) {
